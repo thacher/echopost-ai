@@ -97,21 +97,21 @@ export default function VideoUpload({ onFileUpload }: VideoUploadProps) {
 
   return (
     <div className="w-full">
-      <motion.div
-        {...getRootProps()}
-        className={`relative border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-300 ${
-          isDragActive
-            ? 'border-primary-500 bg-primary-50 scale-105'
-            : isDragReject
-            ? 'border-red-400 bg-red-50'
-            : uploading
-            ? 'border-secondary-300 bg-secondary-50 cursor-not-allowed'
-            : 'border-secondary-300 bg-white hover:border-primary-400 hover:bg-primary-50/50'
-        }`}
-        whileHover={!uploading ? { scale: 1.02 } : {}}
-        whileTap={!uploading ? { scale: 0.98 } : {}}
-      >
-        <input {...getInputProps()} />
+      <div {...getRootProps()}>
+        <motion.div
+          className={`relative border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-300 ${
+            isDragActive
+              ? 'border-primary-500 bg-primary-50 scale-105'
+              : isDragReject
+              ? 'border-red-400 bg-red-50'
+              : uploading
+              ? 'border-secondary-300 bg-secondary-50 cursor-not-allowed'
+              : 'border-secondary-300 bg-white hover:border-primary-400 hover:bg-primary-50/50'
+          }`}
+          whileHover={!uploading ? { scale: 1.02 } : {}}
+          whileTap={!uploading ? { scale: 0.98 } : {}}
+        >
+          <input {...getInputProps()} />
         
         {uploading ? (
           <div className="space-y-4">
@@ -186,7 +186,8 @@ export default function VideoUpload({ onFileUpload }: VideoUploadProps) {
             )}
           </div>
         )}
-      </motion.div>
+        </motion.div>
+      </div>
 
       {/* Upload Tips */}
       <div className="mt-8 grid md:grid-cols-3 gap-4">
@@ -206,7 +207,7 @@ export default function VideoUpload({ onFileUpload }: VideoUploadProps) {
           </div>
           <h3 className="font-medium text-green-900 mb-2">Optimized</h3>
           <p className="text-sm text-green-700">
-            We'll automatically optimize for each social platform
+            We&apos;ll automatically optimize for each social platform
           </p>
         </div>
 

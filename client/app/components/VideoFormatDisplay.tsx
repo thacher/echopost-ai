@@ -34,6 +34,8 @@ interface ProcessingResults {
       aspectRatio: string
       url: string
       config: any
+      error?: string
+      processedAt?: string
     }
   }
 }
@@ -340,9 +342,11 @@ export default function VideoFormatDisplay({
                 ) : (
                   <div className="text-sm text-secondary-600">
                     <p>{data.width} × {data.height}</p>
-                    <p className="text-xs text-secondary-500 mt-1">
-                      Processed at {new Date(data.processedAt).toLocaleTimeString()}
-                    </p>
+                    {data.processedAt && (
+                      <p className="text-xs text-secondary-500 mt-1">
+                        Processed at {new Date(data.processedAt).toLocaleTimeString()}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

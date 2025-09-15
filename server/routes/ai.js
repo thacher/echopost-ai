@@ -2,14 +2,23 @@ const express = require('express');
 const OpenAI = require('openai');
 const router = express.Router();
 
-// Initialize OpenAI
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize OpenAI (only if API key is provided)
+let openai = null;
+if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'mock_openai_api_key') {
+    openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+    });
+}
 
 // Generate content for social media post
 router.post('/generate-content', async (req, res) => {
     try {
+        if (!openai) {
+            return res.status(503).json({ 
+                error: 'OpenAI service not configured. Please set OPENAI_API_KEY environment variable.' 
+            });
+        }
+
         const { 
             videoDescription, 
             targetAudience, 
@@ -64,6 +73,12 @@ router.post('/generate-content', async (req, res) => {
 // Generate hashtags
 router.post('/generate-hashtags', async (req, res) => {
     try {
+        if (!openai) {
+            return res.status(503).json({ 
+                error: 'OpenAI service not configured. Please set OPENAI_API_KEY environment variable.' 
+            });
+        }
+
         const { content, platform, niche } = req.body;
 
         const prompt = `Generate relevant hashtags for a ${platform} post about ${niche || 'general content'}. 

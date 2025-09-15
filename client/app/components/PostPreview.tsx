@@ -400,7 +400,7 @@ export default function PostPreview({
           <div>
             <h4 className="font-semibold text-blue-900 mb-2">Before You Post</h4>
             <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Review each platform's content for accuracy</li>
+              <li>• Review each platform&apos;s content for accuracy</li>
               <li>• Check character limits for each platform</li>
               <li>• Ensure your social media accounts are connected</li>
             </ul>

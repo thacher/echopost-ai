@@ -9,7 +9,7 @@ import {
   ChatBubbleLeftIcon,
   ShareIcon,
   CalendarIcon,
-  ArrowArrowTrendingUpIcon,
+  ArrowTrendingUpIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
   ClockIcon
