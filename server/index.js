@@ -35,6 +35,7 @@ app.use('/api/upload', require('./routes/upload'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/social', require('./routes/social'));
 app.use('/api/posts', require('./routes/posts'));
+app.use('/api/agents', require('./routes/agents'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

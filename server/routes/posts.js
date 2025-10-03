@@ -35,6 +35,16 @@ router.get('/:id', (req, res) => {
     }
 });
 
+// Helper function to check platform connections
+const checkPlatformConnections = () => {
+    return {
+        facebook: !!process.env.FACEBOOK_ACCESS_TOKEN,
+        instagram: !!process.env.INSTAGRAM_ACCESS_TOKEN,
+        tiktok: !!process.env.TIKTOK_ACCESS_TOKEN,
+        youtube: !!process.env.YOUTUBE_ACCESS_TOKEN
+    };
+};
+
 // Create new post
 router.post('/', (req, res) => {
     try {
@@ -47,6 +57,29 @@ router.post('/', (req, res) => {
             scheduledTime,
             status = 'draft'
         } = req.body;
+
+        // Check if any platforms are connected
+        const platformConnections = checkPlatformConnections();
+        const connectedPlatforms = Object.entries(platformConnections)
+            .filter(([_, connected]) => connected)
+            .map(([platform, _]) => platform);
+
+        // If trying to publish to platforms but none are connected
+        if (platforms && platforms.length > 0 && status === 'published') {
+            const hasConnectedPlatform = platforms.some(platform => 
+                connectedPlatforms.includes(platform.toLowerCase())
+            );
+            
+            if (!hasConnectedPlatform) {
+                return res.status(400).json({
+                    error: 'No connected platforms',
+                    message: 'Cannot publish post. Please configure API keys for at least one social media platform in your .env file.',
+                    connectedPlatforms: connectedPlatforms,
+                    requestedPlatforms: platforms,
+                    help: 'Copy env.example to .env and configure your API keys'
+                });
+            }
+        }
 
         const newPost = {
             id: postIdCounter++,
@@ -67,7 +100,8 @@ router.post('/', (req, res) => {
         res.status(201).json({
             success: true,
             post: newPost,
-            message: 'Post created successfully'
+            message: 'Post created successfully',
+            connectedPlatforms: connectedPlatforms
         });
 
     } catch (error) {
@@ -163,6 +197,28 @@ router.post('/:id/publish', async (req, res) => {
 
         const post = posts[postIndex];
         const { tokens } = req.body;
+
+        // Check if any platforms are connected before publishing
+        const platformConnections = checkPlatformConnections();
+        const connectedPlatforms = Object.entries(platformConnections)
+            .filter(([_, connected]) => connected)
+            .map(([platform, _]) => platform);
+
+        if (post.platforms && post.platforms.length > 0) {
+            const hasConnectedPlatform = post.platforms.some(platform => 
+                connectedPlatforms.includes(platform.toLowerCase())
+            );
+            
+            if (!hasConnectedPlatform) {
+                return res.status(400).json({
+                    error: 'No connected platforms',
+                    message: 'Cannot publish post. Please configure API keys for at least one social media platform in your .env file.',
+                    connectedPlatforms: connectedPlatforms,
+                    requestedPlatforms: post.platforms,
+                    help: 'Copy env.example to .env and configure your API keys'
+                });
+            }
+        }
 
         // Update post status
         posts[postIndex].status = 'publishing';

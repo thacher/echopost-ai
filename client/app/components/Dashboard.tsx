@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import AnalyticsModal from './AnalyticsModal'
+import PerformanceReportModal from './PerformanceReportModal'
 import { 
   ChartBarIcon,
   EyeIcon,
@@ -12,7 +14,10 @@ import {
   ArrowTrendingUpIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  ClockIcon
+  ClockIcon,
+  SparklesIcon,
+  VideoCameraIcon,
+  DocumentChartBarIcon
 } from '@heroicons/react/24/outline'
 
 interface Post {
@@ -80,19 +85,45 @@ const PlatformIcon = ({ platform, size = 'w-5 h-5' }: { platform: string, size?:
   }
 }
 
-export default function Dashboard() {
+interface DashboardProps {
+  onShowAgents?: () => void
+  onUploadVideo?: () => void
+}
+
+export default function Dashboard({ onShowAgents, onUploadVideo }: DashboardProps) {
   const [posts, setPosts] = useState<Post[]>([])
   const [analytics, setAnalytics] = useState<{ [key: number]: Analytics }>({})
   const [loading, setLoading] = useState(true)
   const [selectedPost, setSelectedPost] = useState<number | null>(null)
+  const [showAnalyticsModal, setShowAnalyticsModal] = useState(false)
+  const [showPerformanceReport, setShowPerformanceReport] = useState(false)
+  const [platformStatus, setPlatformStatus] = useState<{ [key: string]: boolean }>({})
 
   useEffect(() => {
     fetchPosts()
+    fetchPlatformStatus()
   }, [])
+
+  const fetchPlatformStatus = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/social/status')
+      const data = await response.json()
+      setPlatformStatus(data.status)
+    } catch (error) {
+      console.error('Error fetching platform status:', error)
+      // Set all platforms as disconnected if API fails
+      setPlatformStatus({
+        facebook: false,
+        instagram: false,
+        tiktok: false,
+        youtube: false
+      })
+    }
+  }
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch('/api/posts')
+      const response = await fetch('http://localhost:3000/api/posts')
       const data = await response.json()
       setPosts(data.posts || [])
       
@@ -100,7 +131,7 @@ export default function Dashboard() {
       const analyticsPromises = data.posts?.map(async (post: Post) => {
         if (post.status === 'published') {
           try {
-            const analyticsResponse = await fetch(`/api/posts/${post.id}/analytics`)
+            const analyticsResponse = await fetch(`http://localhost:3000/api/posts/${post.id}/analytics`)
             const analyticsData = await analyticsResponse.json()
             return { postId: post.id, analytics: analyticsData.analytics }
           } catch (error) {
@@ -259,7 +290,14 @@ export default function Dashboard() {
           <div className="text-center py-12">
             <ChartBarIcon className="w-16 h-16 text-secondary-400 mx-auto mb-4" />
             <h4 className="text-lg font-medium text-secondary-900 mb-2">No posts yet</h4>
-            <p className="text-secondary-600">Create your first post to see it here</p>
+            <p className="text-secondary-600 mb-4">Create your first post to see it here</p>
+            {Object.values(platformStatus).every(status => !status) && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
+                <p className="text-sm text-yellow-800">
+                  <strong>Setup Required:</strong> Configure API keys in your .env file to connect social media platforms before creating posts.
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
@@ -347,39 +385,74 @@ export default function Dashboard() {
         <div className="card">
           <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
           <div className="space-y-3">
-            <button className="w-full btn-primary justify-start">
-              <CalendarIcon className="w-5 h-5 mr-3" />
-              Schedule New Post
+            <button 
+              onClick={onUploadVideo}
+              className="w-full btn-primary justify-start"
+            >
+              <VideoCameraIcon className="w-5 h-5 mr-3" />
+              Upload New Video
             </button>
-            <button className="w-full btn-outline justify-start">
-              <ChartBarIcon className="w-5 h-5 mr-3" />
-              View Detailed Analytics
-            </button>
-            <button className="w-full btn-outline justify-start">
-              <ArrowTrendingUpIcon className="w-5 h-5 mr-3" />
-              Content Performance Report
+            {onShowAgents && (
+              <button 
+                onClick={onShowAgents}
+                className="w-full btn-outline justify-start"
+              >
+                <SparklesIcon className="w-5 h-5 mr-3" />
+                Manage AI Agents
+              </button>
+            )}
+            <button 
+              onClick={() => setShowPerformanceReport(true)}
+              className="w-full btn-outline justify-start"
+            >
+              <DocumentChartBarIcon className="w-5 h-5 mr-3" />
+              Performance Report
             </button>
           </div>
         </div>
 
         <div className="card">
-          <h3 className="text-lg font-semibold mb-4">Platform Status</h3>
-          <div className="space-y-3">
-            {Object.entries(platformConfig).map(([key, platform]) => (
-              <div key={key} className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <PlatformIcon platform={key} size="w-5 h-5" />
-                  <span className="font-medium">{platform.name}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-green-600">Connected</span>
-                </div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Platform Status</h3>
+            {Object.values(platformStatus).every(status => !status) && (
+              <div className="text-xs text-gray-500 bg-yellow-50 px-2 py-1 rounded">
+                Configure API keys in .env file
               </div>
-            ))}
+            )}
+          </div>
+          <div className="space-y-3">
+            {Object.entries(platformConfig).map(([key, platform]) => {
+              const isConnected = platformStatus[key] || false
+              return (
+                <div key={key} className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <PlatformIcon platform={key} size="w-5 h-5" />
+                    <span className="font-medium">{platform.name}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <span className={`text-sm ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
+                      {isConnected ? 'Connected' : 'Not Connected'}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <AnalyticsModal 
+        isOpen={showAnalyticsModal}
+        onClose={() => setShowAnalyticsModal(false)}
+        post={posts.find(p => p.id === selectedPost) || null}
+      />
+      
+      <PerformanceReportModal 
+        isOpen={showPerformanceReport}
+        onClose={() => setShowPerformanceReport(false)}
+      />
     </div>
   )
 }
